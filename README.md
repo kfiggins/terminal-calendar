@@ -30,6 +30,59 @@ A beautiful, interactive terminal-based calendar that displays your AI-generated
 
 ### Installation
 
+Choose the installation method that best fits your needs:
+
+#### Option A: Global Install with pipx (⭐ Recommended)
+
+Use `pipx` to install globally without affecting your system Python. Run `tcal` from anywhere without activating virtual environments!
+
+```bash
+# Install pipx if you don't have it
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+
+# Clone and install
+git clone https://github.com/yourusername/terminal-calendar.git
+cd terminal-calendar
+pipx install .
+
+# Use from anywhere!
+tcal --version
+tcal view
+```
+
+**Update**: `pipx upgrade terminal-calendar` (from project directory)
+**Uninstall**: `pipx uninstall terminal-calendar`
+
+#### Option B: User-Level Install
+
+Install without pipx using standard pip:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/terminal-calendar.git
+cd terminal-calendar
+
+# Install for current user
+pip install --user .
+
+# Verify (should work from any directory)
+tcal --version
+```
+
+**Update**: `pip install --user --upgrade .` (from project directory)
+**Uninstall**: `pip uninstall terminal-calendar`
+
+**Note**: If `tcal` command not found, add `~/.local/bin` to your PATH:
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc
+```
+
+#### Option C: Development Mode
+
+For contributors or if you want to modify the code:
+
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/terminal-calendar.git
@@ -37,14 +90,26 @@ cd terminal-calendar
 
 # Create and activate virtual environment
 python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate
 
-# Install in development mode
+# Install in editable mode
 pip install -e .
 
 # Verify installation
 tcal --version
 ```
+
+**Quick launcher** (no activation needed):
+```bash
+./tcal-dev.sh view          # Use the included launcher script
+./tcal-dev.sh stats --days 7
+```
+
+**Or add a shell alias** to your `~/.zshrc` or `~/.bashrc`:
+```bash
+alias tcal='source ~/repos/personal/terminal-calendar/.venv/bin/activate && tcal'
+```
+Then just use `tcal` from anywhere (reopen terminal or `source ~/.zshrc`)
 
 ### Basic Usage
 
@@ -186,6 +251,57 @@ When viewing the calendar (`tcal view`):
 
 **Navigation**: Vim-style (j/k) and arrow keys both work!
 **Pro tip**: Use `j` and `k` for one-handed navigation while taking notes
+
+## 💡 Installation Tips
+
+### Why pipx is Recommended
+
+- **Isolation**: Each tool gets its own environment, no dependency conflicts
+- **Global Access**: Use `tcal` from any directory without activation
+- **Easy Updates**: `pipx upgrade terminal-calendar`
+- **Clean Uninstall**: `pipx uninstall terminal-calendar` removes everything
+
+### Updating Your Installation
+
+```bash
+# pipx method
+cd terminal-calendar
+pipx upgrade terminal-calendar
+
+# user install method
+cd terminal-calendar
+pip install --user --upgrade .
+
+# development mode
+cd terminal-calendar
+source .venv/bin/activate
+pip install -e .  # Already up to date if working from repo
+```
+
+### Troubleshooting
+
+**`tcal` command not found after pip install --user**:
+```bash
+# Add ~/.local/bin to PATH
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc
+```
+
+**Want to use dev mode but don't want to activate venv every time**:
+```bash
+# Option 1: Use the launcher script
+./tcal-dev.sh view
+
+# Option 2: Create an alias (add to ~/.zshrc or ~/.bashrc)
+alias tcal='source ~/repos/personal/terminal-calendar/.venv/bin/activate && tcal'
+source ~/.zshrc  # Reload shell config
+```
+
+**Check which tcal you're using**:
+```bash
+which tcal           # Show path to tcal command
+tcal --version       # Verify it's working
+```
 
 ## 📁 File Locations
 
