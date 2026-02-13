@@ -4,6 +4,7 @@ A beautiful, interactive terminal-based calendar that displays your AI-generated
 
 ## ✨ Features
 
+### Core Features
 - **🤖 LLM-Generated Schedules**: Create schedules from natural language task lists using JSON
 - **⏰ Real-Time Updates**: Auto-refreshes every minute with current task highlighting
 - **✅ Task Completion**: Mark tasks complete with simple keyboard shortcuts
@@ -11,6 +12,13 @@ A beautiful, interactive terminal-based calendar that displays your AI-generated
 - **📊 Daily Reports**: Comprehensive end-of-day summaries with insights and recommendations
 - **🎨 Beautiful UI**: Colorful, priority-coded terminal interface with progress bars
 - **⌨️  Vim-Style Navigation**: Navigate with hjkl or arrow keys
+
+### Advanced Features (Phase 10)
+- **⚙️ Configuration System**: Customize colors, themes, auto-refresh intervals, and more
+- **⚠️ Schedule Validation**: Detect overlapping tasks, gaps, and scheduling issues
+- **📝 Task Notes**: Add notes and observations to tasks throughout the day
+- **💼 Export Formats**: Export schedules to iCal (.ics), CSV, or JSON with state
+- **📈 Statistics Dashboard**: Track productivity trends and completion patterns over time
 
 ## 🚀 Quick Start
 
@@ -130,19 +138,38 @@ Reports include:
 ### All Commands
 
 ```bash
+# Schedule Management
 tcal load <file>         # Load a schedule file
 tcal view                # Launch interactive TUI
 tcal view --file <file>  # View specific file without loading
+tcal validate            # Validate current or specified schedule
+tcal validate <file>     # Validate a specific schedule file
 
+# Task Management
 tcal info                # Show schedule information
 tcal status              # Quick status check
 tcal complete <task_id>  # Mark task complete
 tcal complete --undo     # Mark task incomplete
+tcal note <task_id> "note"  # Add a note to a task
 
+# Reporting & Analytics
 tcal report              # Generate end-of-day report
 tcal report --date DATE  # Report for specific date
 tcal reports             # List recent reports
+tcal stats               # Show productivity statistics
+tcal stats --days 14     # Analyze last 14 days
 
+# Export
+tcal export              # Export to JSON (default)
+tcal export -f ical      # Export to iCal format
+tcal export -f csv       # Export to CSV format
+tcal export -o file.ics  # Specify output file
+
+# Configuration
+tcal config --show       # Show current configuration
+tcal config --reset      # Reset to default configuration
+
+# Utility
 tcal clear               # Clear current schedule
 tcal --version           # Show version
 tcal --help              # Show help
@@ -224,12 +251,14 @@ pytest --cov=src/terminal_calendar --cov-report=html
 open htmlcov/index.html  # View coverage report
 ```
 
-**Current Test Status**: 94 tests, 65% coverage
-- `models.py`: 96% coverage
+**Current Test Status**: 111 tests, 59% coverage
+- `models.py`: 97% coverage
 - `report_generator.py`: 100% coverage
+- `config.py`: 94% coverage
 - `schedule_parser.py`: 91% coverage
 - `state_manager.py`: 85% coverage
-- `cli.py`: 74% coverage
+- `validator.py`: 73% coverage
+- `cli.py`: 56% coverage
 
 ### Project Structure
 
@@ -290,11 +319,15 @@ MIT License - see LICENSE file for details
 - [x] Interactive task completion
 - [x] Enhanced visual design with priority colors
 - [x] End-of-day report generation
-- [x] Comprehensive testing (94 tests, 65% coverage)
-- [ ] Configuration system (custom themes, preferences)
-- [ ] Advanced features (week/month views, statistics dashboard)
+- [x] Comprehensive testing (111 tests, 59% coverage)
+- [x] Configuration system (custom themes, preferences, validation settings)
+- [x] Schedule validation (overlapping tasks, gaps, duration checks)
+- [x] Task notes and comments
+- [x] Export formats (iCal, CSV, JSON)
+- [x] Statistics dashboard (productivity trends and analysis)
+- [ ] Week/month calendar views
 - [ ] Schedule templates and automation
-- [ ] Export formats (iCal, CSV)
+- [ ] Mobile/web companion app
 
 ## 💡 Tips & Best Practices
 

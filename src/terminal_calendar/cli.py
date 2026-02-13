@@ -7,10 +7,14 @@ from pathlib import Path
 import click
 
 from .calendar_app import run_calendar_app
+from .config import ConfigManager, Config
+from .export import export_to_ical, export_to_csv, export_to_json, export_report_to_csv, export_report_to_json
 from .models import AppState
 from .report_generator import generate_report, save_report, get_recent_reports
 from .schedule_parser import ScheduleParseError, load_schedule
 from .state_manager import StateManager, StateManagerError
+from .statistics import generate_statistics_report
+from .validator import validate_schedule, format_validation_report
 
 
 @click.group()
@@ -422,6 +426,229 @@ def reports() -> None:
             click.echo(f"     Modified: {modified_str}  |  Size: {size} bytes")
             click.echo(f"     Path: {report_path}")
             click.echo()
+
+    except Exception as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+@click.argument("schedule_file", type=click.Path(exists=True, path_type=Path), required=False)
+def validate(schedule_file: Path | None = None) -> None:
+    """Validate a schedule for overlaps, gaps, and other issues."""
+    try:
+        # Load config for validation settings
+        config_manager = ConfigManager()
+        config = config_manager.load_config()
+
+        # Get schedule file
+        if schedule_file is None:
+            state_manager = StateManager()
+            state = state_manager.load_state()
+            if state is None:
+                click.secho("✗ No schedule loaded.", fg="yellow")
+                click.echo("  Specify a file: tcal validate <schedule_file>")
+                sys.exit(1)
+            schedule_file = Path(state.schedule_file)
+
+        # Load and validate schedule
+        schedule = load_schedule(schedule_file)
+
+        warnings = validate_schedule(
+            schedule,
+            warn_overlapping=config.validation.warn_overlapping,
+            warn_gaps=config.validation.warn_gaps,
+            min_gap_minutes=config.validation.min_gap_minutes,
+            max_gap_minutes=config.validation.max_gap_minutes,
+        )
+
+        # Display results
+        report = format_validation_report(warnings)
+        click.echo(report)
+
+        if warnings:
+            sys.exit(1)
+
+    except (ScheduleParseError, StateManagerError) as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.secho(f"✗ Unexpected error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+@click.argument("task_id")
+@click.argument("note_content")
+def note(task_id: str, note_content: str) -> None:
+    """Add a note to a task.
+
+    TASK_ID: The ID of the task to add a note to
+    NOTE_CONTENT: The note content (use quotes for multi-word notes)
+    """
+    try:
+        state_manager = StateManager()
+        state = state_manager.load_state()
+
+        if state is None:
+            click.secho("✗ No schedule loaded.", fg="yellow")
+            sys.exit(1)
+
+        # Load schedule to verify task exists
+        schedule = load_schedule(state.schedule_file)
+        task = schedule.get_task_by_id(task_id)
+
+        if task is None:
+            click.secho(f"✗ Task '{task_id}' not found.", fg="red", err=True)
+            sys.exit(1)
+
+        # Add note
+        state.add_note(task_id, note_content)
+        state_manager.save_state(state)
+
+        click.secho(f"✓ Note added to '{task.title}'", fg="green")
+        notes = state.get_notes(task_id)
+        click.echo(f"  Total notes for this task: {len(notes)}")
+
+    except (StateManagerError, ScheduleParseError) as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+@click.option(
+    "--format",
+    "-f",
+    "export_format",
+    type=click.Choice(["ical", "csv", "json"], case_sensitive=False),
+    default="json",
+    help="Export format (default: json)",
+)
+@click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(path_type=Path),
+    help="Output file path",
+)
+@click.option(
+    "--include-state",
+    is_flag=True,
+    default=True,
+    help="Include completion and notes in export",
+)
+def export(export_format: str, output_file: Path | None, include_state: bool) -> None:
+    """Export schedule to various formats.
+
+    Exports the current schedule to iCal (.ics), CSV, or JSON format.
+    """
+    try:
+        state_manager = StateManager()
+        state = state_manager.load_state()
+
+        if state is None:
+            click.secho("✗ No schedule loaded.", fg="yellow")
+            sys.exit(1)
+
+        schedule = load_schedule(state.schedule_file)
+
+        # Determine output filename
+        if output_file is None:
+            date_str = schedule.date.strftime("%Y-%m-%d")
+            extensions = {"ical": "ics", "csv": "csv", "json": "json"}
+            ext = extensions.get(export_format, "txt")
+            output_file = Path(f"schedule-{date_str}.{ext}")
+
+        # Export based on format
+        if export_format == "ical":
+            export_to_ical(schedule, output_file)
+        elif export_format == "csv":
+            export_to_csv(schedule, output_file, state if include_state else None)
+        elif export_format == "json":
+            export_to_json(schedule, output_file, state if include_state else None)
+
+        click.secho(f"✓ Schedule exported to: {output_file}", fg="green")
+
+    except (StateManagerError, ScheduleParseError) as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.secho(f"✗ Unexpected error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+@click.option(
+    "--days",
+    "-d",
+    type=int,
+    default=7,
+    help="Number of days to analyze (default: 7)",
+)
+def stats(days: int) -> None:
+    """Show productivity statistics and trends.
+
+    Analyzes recent reports to show completion trends and patterns.
+    """
+    try:
+        state_manager = StateManager()
+        reports_dir = state_manager.config_dir / "reports"
+
+        if not reports_dir.exists():
+            click.secho("✗ No reports found.", fg="yellow")
+            click.echo("  Generate some reports first with: tcal report")
+            sys.exit(1)
+
+        report = generate_statistics_report(reports_dir, days=days)
+        click.echo(report)
+
+    except Exception as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+@click.option(
+    "--show",
+    is_flag=True,
+    help="Show current configuration",
+)
+@click.option(
+    "--reset",
+    is_flag=True,
+    help="Reset configuration to defaults",
+)
+def config(show: bool, reset: bool) -> None:
+    """Manage application configuration.
+
+    View or reset configuration settings. Config file is stored at
+    ~/.terminal-calendar/config.json
+    """
+    try:
+        config_manager = ConfigManager()
+
+        if reset:
+            if click.confirm("Reset all configuration to defaults?"):
+                config_manager.reset_config()
+                click.secho("✓ Configuration reset to defaults", fg="green")
+            else:
+                click.echo("Cancelled.")
+            return
+
+        if show or (not reset):
+            config_obj = config_manager.load_config()
+            config_dict = config_obj.model_dump()
+
+            click.secho("⚙️  Current Configuration", fg="cyan", bold=True)
+            click.echo(f"  Config file: {config_manager.get_config_path()}")
+            click.echo()
+
+            # Display in sections
+            import json
+            click.echo(json.dumps(config_dict, indent=2))
+            click.echo()
+            click.echo("  To modify: Edit the config file directly")
+            click.echo("  To reset: tcal config --reset")
 
     except Exception as e:
         click.secho(f"✗ Error: {e}", fg="red", err=True)
