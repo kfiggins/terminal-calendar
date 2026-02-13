@@ -22,6 +22,8 @@ A beautiful, interactive terminal-based calendar that displays your AI-generated
 
 ## 🚀 Quick Start
 
+**📋 LLM Schedule Format**: See [SCHEDULE_FORMAT.md](SCHEDULE_FORMAT.md) for the JSON schema to use with your LLM.
+
 ### Prerequisites
 
 - Python 3.11 or higher
@@ -115,8 +117,11 @@ Then just use `tcal` from anywhere (reopen terminal or `source ~/.zshrc`)
 
 #### 1. Generate a Schedule with an LLM
 
-Use your preferred LLM (Claude, GPT-4, etc.) with this prompt:
+Use your preferred LLM (Claude, GPT-4, etc.) to generate a daily schedule in JSON format.
 
+**📋 Quick Reference**: See [SCHEDULE_FORMAT.md](SCHEDULE_FORMAT.md) for complete format specification, validation rules, and LLM prompt templates.
+
+**Example prompt**:
 ```
 Create a daily schedule in JSON format for the following tasks:
 - Morning standup at 9am (15 minutes)
@@ -142,7 +147,7 @@ Format the output as JSON with this structure:
 }
 ```
 
-Save the JSON output to a file (e.g., `schedule.json`). See [examples/schedule.json](examples/schedule.json) for a complete example.
+Save the JSON output to a file (e.g., `schedule.json`). See [examples/sample_schedule.json](examples/sample_schedule.json) for a complete example.
 
 #### 2. Load Your Schedule
 

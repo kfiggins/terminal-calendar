@@ -32,23 +32,24 @@ class TaskListItem(ListItem):
             is_completed: Whether this task is marked complete
             is_past: Whether this task is in the past
         """
+        # Store data with unique names to avoid conflicts with Textual internals
+        self.task_data = task
+        self.task_is_current = is_current
+        self.task_is_completed = is_completed
+        self.task_is_past = is_past
         super().__init__(**kwargs)
-        self.task = task
-        self.is_current = is_current
-        self.is_completed = is_completed
-        self.is_past = is_past
 
     def render(self) -> str:
         """Render the task item."""
         # Base styling
-        base_style = "dim" if self.is_past and not self.is_completed else ""
+        base_style = "dim" if self.task_is_past and not self.task_is_completed else ""
 
         # Status icon and style
-        if self.is_completed:
+        if self.task_is_completed:
             icon = "✓"
             icon_style = "bold green"
             title_style = "green"
-        elif self.is_current:
+        elif self.task_is_current:
             icon = "▶"
             icon_style = "bold yellow"
             title_style = "bold yellow"
@@ -68,7 +69,7 @@ class TaskListItem(ListItem):
             "medium": "yellow",
             "low": "green",
         }
-        priority_color = priority_colors.get(self.task.priority, "white")
+        priority_color = priority_colors.get(self.task_data.priority, "white")
         if base_style:
             priority_color = f"{priority_color} {base_style}"
 
@@ -78,30 +79,30 @@ class TaskListItem(ListItem):
             "medium": "!!",
             "low": "!",
         }
-        priority_badge = priority_badges.get(self.task.priority, "")
+        priority_badge = priority_badges.get(self.task_data.priority, "")
 
         # Time range
-        time_str = f"{self.task.start_time}-{self.task.end_time}"
+        time_str = f"{self.task_data.start_time}-{self.task_data.end_time}"
         time_style = f"bold cyan" if not base_style else f"cyan {base_style}"
 
         # Build the display text with better spacing
         parts = [
             f"[{icon_style}]{icon:2}[/]",
             f"[{time_style}]{time_str}[/]",
-            f"[{title_style}]{self.task.title}[/]",
+            f"[{title_style}]{self.task_data.title}[/]",
             f"[{priority_color}]{priority_badge}[/]",
         ]
 
         line = "  ".join(parts)
 
         # Add description on second line if present
-        if self.task.description:
-            desc = self.task.description[:75] + "..." if len(self.task.description) > 75 else self.task.description
+        if self.task_data.description:
+            desc = self.task_data.description[:75] + "..." if len(self.task_data.description) > 75 else self.task_data.description
             desc_style = f"dim italic" if not base_style else "dim"
             line += f"\n     [{desc_style}]{desc}[/]"
 
         # Add duration hint
-        duration = self.task.duration_minutes()
+        duration = self.task_data.duration_minutes()
         hours = duration // 60
         mins = duration % 60
         if hours > 0:
@@ -450,11 +451,11 @@ class CalendarApp(App):
         if not isinstance(selected_item, TaskListItem):
             return
 
-        task = selected_item.task
+        task = selected_item.task_data
 
         # Toggle completion in state
         try:
-            if selected_item.is_completed:
+            if selected_item.task_is_completed:
                 self.state_manager.mark_task_incomplete(task.id)
                 self.notify(f"Unmarked: {task.title}", severity="information")
             else:
