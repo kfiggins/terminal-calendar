@@ -186,16 +186,18 @@ class CalendarApp(App):
         margin: 1 1 0 1;
     }
 
-    #progress-container {
-        background: $panel-darken-1;
-        padding: 1 2;
-        margin: 0 1 1 1;
-        border: solid $primary-lighten-1;
-    }
-
     #task-list-container {
         height: 1fr;
-        padding: 0 1 1 1;
+        padding: 0 1;
+        margin-top: 1;
+    }
+
+    #progress-container {
+        background: $panel;
+        color: $text;
+        padding: 1 2;
+        border: heavy $primary;
+        margin: 0 1 1 1;
     }
 
     #task-list {
@@ -249,16 +251,15 @@ class CalendarApp(App):
         yield Header(show_clock=True)
 
         with Container(id="calendar-container"):
-            # Schedule info header
+            # Schedule info header (now includes duration)
             yield Static(self._render_schedule_header(), id="schedule-header")
 
-            # Progress bar section
-            with Container(id="progress-container"):
-                yield Static(self._render_progress(), id="progress-bar")
-
-            # Task list with container
+            # Task list with container (gets maximum space!)
             with Container(id="task-list-container"):
                 yield ListView(id="task-list")
+
+            # Progress bar at bottom
+            yield Static(self._render_progress(), id="progress-container")
 
         yield Footer()
 
@@ -337,10 +338,21 @@ class CalendarApp(App):
 
         # Current task
         current_task = self.schedule.get_current_task(now.time())
+        duration_str = ""
+
         if current_task:
             current_str = f"[bold yellow]▶ {current_task.title}[/]"
             time_left = self._time_until(current_task.get_end_time())
             current_str += f" [dim](ends in {time_left})[/]"
+
+            # Get duration for current task
+            duration = current_task.duration_minutes()
+            hours = duration // 60
+            mins = duration % 60
+            if hours > 0:
+                duration_str = f"{hours}h {mins}m" if mins > 0 else f"{hours}h"
+            else:
+                duration_str = f"{mins}m"
         else:
             # Show next task
             upcoming = self.schedule.get_upcoming_tasks(now.time(), limit=1)
@@ -357,6 +369,38 @@ class CalendarApp(App):
             f"🕐 Current time: [bold yellow]{time_str}[/]",
             f"   {current_str}",
         ]
+
+        if duration_str:
+            header_lines.append(f"   [dim]Duration: {duration_str}[/]")
+
+        # Add time progress bar for current task
+        if current_task:
+            start = current_task.get_start_time()
+            end = current_task.get_end_time()
+
+            # Calculate progress
+            total_minutes = (end.hour * 60 + end.minute) - (start.hour * 60 + start.minute)
+            elapsed_minutes = (now.time().hour * 60 + now.time().minute) - (start.hour * 60 + start.minute)
+
+            if total_minutes > 0 and elapsed_minutes >= 0:
+                progress_pct = min(100, max(0, (elapsed_minutes / total_minutes) * 100))
+                remaining_minutes = max(0, total_minutes - elapsed_minutes)
+
+                # Create progress bar (30 chars wide)
+                bar_width = 30
+                filled = int((progress_pct / 100) * bar_width)
+                empty = bar_width - filled
+                progress_bar = f"[yellow]{'█' * filled}[/][dim]{'░' * empty}[/]"
+
+                # Time remaining
+                rem_hours = remaining_minutes // 60
+                rem_mins = remaining_minutes % 60
+                if rem_hours > 0:
+                    remaining_str = f"{rem_hours}h {rem_mins}m" if rem_mins > 0 else f"{rem_hours}h"
+                else:
+                    remaining_str = f"{rem_mins}m"
+
+                header_lines.append(f"   {progress_bar} [yellow]{progress_pct:.0f}%[/] [dim](ends in {remaining_str})[/]")
 
         return "\n".join(header_lines)
 
@@ -378,10 +422,7 @@ class CalendarApp(App):
         progress_bar = DayProgressBar(completed, total)
         bar_render = progress_bar.render()
 
-        # Help text
-        help_text = "[dim]↑↓/jk: Navigate  │  Space/Enter: Toggle  │  r: Refresh  │  q: Quit[/]"
-
-        return f"[bold]Progress:[/] {bar_render}\n{help_text}"
+        return f"[bold]Progress:[/] {bar_render}"
 
     def _time_until(self, target_time: dt.time) -> str:
         """Calculate human-readable time until target time.
@@ -421,8 +462,8 @@ class CalendarApp(App):
         header_widget = self.query_one("#schedule-header", Static)
         header_widget.update(self._render_schedule_header())
 
-        # Update progress
-        progress_widget = self.query_one("#progress-bar", Static)
+        # Update progress container
+        progress_widget = self.query_one("#progress-container", Static)
         progress_widget.update(self._render_progress())
 
         # Refresh task list
@@ -453,6 +494,9 @@ class CalendarApp(App):
 
         task = selected_item.task_data
 
+        # Save current index before repopulating
+        saved_index = task_list.index
+
         # Toggle completion in state
         try:
             if selected_item.task_is_completed:
@@ -466,9 +510,10 @@ class CalendarApp(App):
             self._populate_task_list()
             self._update_current_time()
 
-            # Restore selection position
-            if task_list.index is not None:
-                task_list.index = min(task_list.index, len(task_list) - 1)
+            # Restore selection position and focus
+            if saved_index is not None:
+                task_list.index = min(saved_index, len(task_list) - 1)
+                task_list.focus()
 
         except StateManagerError as e:
             self.notify(f"Error updating task: {e}", severity="error")
