@@ -67,24 +67,26 @@
 
 ---
 
-## Phase 4: Basic CLI
+## Phase 4: Basic CLI ✅ (COMPLETED)
 **Goal**: Create command-line interface for basic operations
 
 **Tasks**:
-- [ ] Create `cli.py` using Click or Typer:
+- [x] Create `cli.py` using Click:
   - `tcal load <file>` - Load schedule and save to state
   - `tcal info` - Show loaded schedule info (date, task count)
   - `tcal complete <task_id>` - Mark task complete via CLI
-- [ ] Add entry point in `pyproject.toml`
-- [ ] Test CLI commands manually
+  - `tcal status` - Quick status with current/upcoming tasks (bonus)
+  - `tcal clear` - Clear state (bonus)
+- [x] Add entry point in `pyproject.toml` (done in Phase 1)
+- [x] Test CLI commands manually
 
-**Deliverable**: Working CLI for schedule management
+**Deliverable**: Working CLI for schedule management ✅
 
 **Success Criteria**:
-- Can run `tcal` command after installation
-- Can load a schedule file
-- Can mark tasks complete from command line
-- Clear error messages for invalid input
+- ✅ Can run `tcal` command after installation
+- ✅ Can load a schedule file
+- ✅ Can mark tasks complete from command line
+- ✅ Clear error messages for invalid input
 
 ---
 
@@ -253,9 +255,9 @@
 ---
 
 ## Current Status
-**Active Phase**: Phase 4 - Basic CLI
-**Completed Phases**: Phase 1 (Project Setup), Phase 2 (Data Models & Parser), Phase 3 (State Management)
-**Next Steps**: Create CLI commands for schedule management
+**Active Phase**: Phase 5 - Core TUI (Basic Display)
+**Completed Phases**: Phases 1-4 (Setup, Models, State, CLI)
+**Next Steps**: Create Textual TUI for interactive calendar view
 
 ---
 
