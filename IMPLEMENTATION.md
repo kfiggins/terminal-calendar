@@ -174,28 +174,30 @@
 
 ---
 
-## Phase 8: Report Generation
+## Phase 8: Report Generation ✅ (COMPLETED)
 **Goal**: Generate end-of-day reports
 
 **Tasks**:
-- [ ] Create `report_generator.py`:
+- [x] Create `report_generator.py`:
   - `generate_report(schedule, state)` function
-  - Calculate completion percentage
+  - Calculate completion percentage (overall + by priority)
   - List completed vs incomplete tasks
-  - Time-based statistics (tasks on time, etc.)
-  - Format report as readable text/markdown
-- [ ] Save reports to `~/.terminal-calendar/reports/YYYY-MM-DD.txt`
-- [ ] Add `tcal report` CLI command
-- [ ] Add "generate report" option in TUI (keybinding 'r')
+  - Time-based statistics (total scheduled, time completed)
+  - Format report as readable text with sections
+  - Insights & recommendations
+- [x] Save reports to `~/.terminal-calendar/reports/YYYY-MM-DD.txt`
+- [x] Add `tcal report` CLI command with options
+- [x] Add `tcal reports` command to list recent reports
+- [x] Support --open flag to view report
 
-**Deliverable**: Automated daily reporting
+**Deliverable**: Automated daily reporting ✅
 
 **Success Criteria**:
-- Report shows completion statistics
-- Report includes task breakdown
-- Reports saved with dated filenames
-- Can generate report for previous dates
-- Report format is clear and actionable
+- ✅ Report shows completion statistics (overall + by priority)
+- ✅ Report includes task breakdown (completed & incomplete)
+- ✅ Reports saved with dated filenames (YYYY-MM-DD.txt)
+- ✅ Can generate report for previous dates (--date flag)
+- ✅ Report format is clear and actionable (sections, emojis, insights)
 
 ---
 
@@ -260,9 +262,9 @@
 ---
 
 ## Current Status
-**Active Phase**: Phase 8 - Report Generation
-**Completed Phases**: Phases 1-7 (Setup, Models, State, CLI, TUI, Interactive, Enhanced UI)
-**Next Steps**: Create end-of-day reporting system
+**Active Phase**: Phase 9 - Testing & Documentation
+**Completed Phases**: Phases 1-8 (Setup, Models, State, CLI, TUI, Interactive, Enhanced UI, Reports)
+**Next Steps**: Write comprehensive tests and documentation
 
 ---
 

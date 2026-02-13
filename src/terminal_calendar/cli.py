@@ -8,6 +8,7 @@ import click
 
 from .calendar_app import run_calendar_app
 from .models import AppState
+from .report_generator import generate_report, save_report, get_recent_reports
 from .schedule_parser import ScheduleParseError, load_schedule
 from .state_manager import StateManager, StateManagerError
 
@@ -304,6 +305,123 @@ def view(schedule_file: Path | None = None) -> None:
 
         # Launch the TUI
         run_calendar_app(schedule_file=schedule_file)
+
+    except Exception as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+@click.option(
+    "--date",
+    "-d",
+    type=click.DateTime(formats=["%Y-%m-%d"]),
+    help="Generate report for a specific date (YYYY-MM-DD)",
+)
+@click.option(
+    "--save/--no-save",
+    default=True,
+    help="Save report to file (default: yes)",
+)
+@click.option(
+    "--open",
+    "-o",
+    "open_file",
+    is_flag=True,
+    help="Open the report file after generation",
+)
+def report(date: dt.datetime | None, save: bool, open_file: bool) -> None:
+    """Generate an end-of-day productivity report.
+
+    Shows completion statistics, time analysis, and task breakdown.
+    Reports are saved to ~/.terminal-calendar/reports/ by default.
+    """
+    try:
+        # Load state
+        state_manager = StateManager()
+        state = state_manager.load_state()
+
+        if state is None:
+            click.secho("✗ No schedule loaded.", fg="yellow")
+            click.echo("  Load a schedule first with: tcal load <schedule_file>")
+            sys.exit(1)
+
+        # Load schedule
+        schedule = load_schedule(state.schedule_file)
+
+        # Check if date matches (if specified)
+        if date and schedule.date != date.date():
+            click.secho(
+                f"✗ Schedule date ({schedule.date}) doesn't match requested date ({date.date()})",
+                fg="red",
+                err=True,
+            )
+            sys.exit(1)
+
+        # Generate report
+        report_content = generate_report(schedule, state)
+
+        # Display report
+        click.echo(report_content)
+
+        # Save report if requested
+        if save:
+            reports_dir = state_manager.create_reports_dir()
+            report_path = save_report(schedule, state, reports_dir)
+            click.echo()
+            click.secho(f"✓ Report saved to: {report_path}", fg="green", bold=True)
+
+            # Open file if requested
+            if open_file:
+                click.launch(str(report_path))
+                click.echo(f"  Opened report in default editor")
+
+    except StateManagerError as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
+        sys.exit(1)
+    except ScheduleParseError as e:
+        click.secho(f"✗ Error loading schedule: {e}", fg="red", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.secho(f"✗ Unexpected error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+def reports() -> None:
+    """List recent reports."""
+    try:
+        state_manager = StateManager()
+        reports_dir = state_manager.config_dir / "reports"
+
+        if not reports_dir.exists():
+            click.secho("No reports found.", fg="yellow")
+            click.echo(f"  Generate a report with: tcal report")
+            return
+
+        recent = get_recent_reports(reports_dir, limit=10)
+
+        if not recent:
+            click.secho("No reports found.", fg="yellow")
+            return
+
+        click.secho("📊 Recent Reports", fg="cyan", bold=True)
+        click.echo()
+
+        for report_path in recent:
+            # Get file stats
+            stat = report_path.stat()
+            modified = dt.datetime.fromtimestamp(stat.st_mtime)
+            size = stat.st_size
+
+            # Format display
+            date_str = report_path.stem  # Filename without extension
+            modified_str = modified.strftime("%Y-%m-%d %H:%M")
+
+            click.echo(f"  📄 {date_str}")
+            click.echo(f"     Modified: {modified_str}  |  Size: {size} bytes")
+            click.echo(f"     Path: {report_path}")
+            click.echo()
 
     except Exception as e:
         click.secho(f"✗ Error: {e}", fg="red", err=True)
