@@ -90,30 +90,32 @@
 
 ---
 
-## Phase 5: Core TUI - Basic Display
+## Phase 5: Core TUI - Basic Display ✅ (COMPLETED)
 **Goal**: Display schedule in terminal using Textual
 
 **Tasks**:
-- [ ] Create `calendar_app.py` with Textual app:
+- [x] Create `calendar_app.py` with Textual app:
   - Basic layout: header, task list, footer
   - Display tasks from loaded schedule
   - Show task times, titles, descriptions
-  - Use simple text formatting
-- [ ] Add time-based highlighting:
+  - Use color-coded formatting
+- [x] Add time-based highlighting:
   - Calculate current time
-  - Highlight current task (if any)
+  - Highlight current task with ▶ icon
   - Show upcoming tasks differently
-- [ ] Add auto-refresh every minute
-- [ ] Integrate with state manager to show completion status
+- [x] Add auto-refresh every minute
+- [x] Integrate with state manager to show completion status
+- [x] Add `tcal view` command to launch TUI
 
-**Deliverable**: Functional terminal calendar view
+**Deliverable**: Functional terminal calendar view ✅
 
 **Success Criteria**:
-- Schedule displays in terminal with readable layout
-- Current task is visually distinct
-- Completed tasks show checkmark or different style
-- UI updates automatically each minute
-- Can exit cleanly with 'q' or Ctrl+C
+- ✅ Schedule displays in terminal with readable layout
+- ✅ Current task is visually distinct (yellow with ▶)
+- ✅ Completed tasks show checkmark (✓) in green
+- ✅ UI updates automatically each minute
+- ✅ Can exit cleanly with 'q' or Ctrl+C
+- ✅ Keybindings: q=quit, r=refresh
 
 ---
 
@@ -255,9 +257,9 @@
 ---
 
 ## Current Status
-**Active Phase**: Phase 5 - Core TUI (Basic Display)
-**Completed Phases**: Phases 1-4 (Setup, Models, State, CLI)
-**Next Steps**: Create Textual TUI for interactive calendar view
+**Active Phase**: Phase 6 - Interactive Task Completion
+**Completed Phases**: Phases 1-5 (Setup, Models, State, CLI, Core TUI)
+**Next Steps**: Add keyboard navigation and in-app task completion
 
 ---
 

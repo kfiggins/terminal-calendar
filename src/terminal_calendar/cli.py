@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 
+from .calendar_app import run_calendar_app
 from .models import AppState
 from .schedule_parser import ScheduleParseError, load_schedule
 from .state_manager import StateManager, StateManagerError
@@ -272,6 +273,40 @@ def status() -> None:
         sys.exit(1)
     except Exception as e:
         click.secho(f"✗ Unexpected error: {e}", fg="red", err=True)
+        sys.exit(1)
+
+
+@main.command()
+@click.option(
+    "--file",
+    "-f",
+    "schedule_file",
+    type=click.Path(exists=True, path_type=Path),
+    help="Schedule file to load (overrides saved state)",
+)
+def view(schedule_file: Path | None = None) -> None:
+    """Launch the interactive TUI calendar view.
+
+    Opens a beautiful terminal interface showing your schedule with
+    real-time updates, current task highlighting, and completion tracking.
+
+    Press 'q' to quit, 'r' to refresh.
+    """
+    try:
+        # Check if we have a schedule (either from file or state)
+        if schedule_file is None:
+            state_manager = StateManager()
+            if not state_manager.state_exists():
+                click.secho("✗ No schedule loaded.", fg="yellow")
+                click.echo("  Load a schedule first with: tcal load <schedule_file>")
+                click.echo("  Or specify a file: tcal view --file <schedule_file>")
+                sys.exit(1)
+
+        # Launch the TUI
+        run_calendar_app(schedule_file=schedule_file)
+
+    except Exception as e:
+        click.secho(f"✗ Error: {e}", fg="red", err=True)
         sys.exit(1)
 
 
