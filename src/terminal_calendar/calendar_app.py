@@ -5,16 +5,17 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Footer, Header, Static, ListItem, ListView
 from textual.reactive import reactive
+from textual import events
 
 from .models import Schedule, Task
 from .schedule_parser import load_schedule, ScheduleParseError
 from .state_manager import StateManager, StateManagerError
 
 
-class TaskListItem(Static):
-    """A single task item in the list."""
+class TaskListItem(ListItem):
+    """A selectable task item in the list."""
 
     def __init__(
         self,
@@ -40,7 +41,7 @@ class TaskListItem(Static):
         # Status icon
         if self.is_completed:
             icon = "✓"
-            style = "green"
+            style = "green bold"
         elif self.is_current:
             icon = "▶"
             style = "yellow bold"
@@ -77,53 +78,6 @@ class TaskListItem(Static):
         return line
 
 
-class CalendarView(Static):
-    """Main calendar view displaying tasks."""
-
-    current_time: reactive[dt.time] = reactive(dt.datetime.now().time)
-
-    def __init__(
-        self,
-        schedule: Schedule,
-        state_manager: StateManager,
-        **kwargs,
-    ) -> None:
-        """Initialize calendar view.
-
-        Args:
-            schedule: The schedule to display
-            state_manager: State manager for completion tracking
-        """
-        super().__init__(**kwargs)
-        self.schedule = schedule
-        self.state_manager = state_manager
-
-    def compose(self) -> ComposeResult:
-        """Compose the calendar view."""
-        # Get current state
-        state = self.state_manager.load_state()
-        completed_tasks = state.completed_tasks if state else set()
-
-        # Get current task
-        current_task = self.schedule.get_current_task(self.current_time)
-
-        # Render all tasks
-        for task in self.schedule.tasks:
-            is_current = current_task is not None and task.id == current_task.id
-            is_completed = task.id in completed_tasks
-
-            yield TaskListItem(
-                task,
-                is_current=is_current,
-                is_completed=is_completed,
-            )
-
-    def watch_current_time(self, new_time: dt.time) -> None:
-        """React to current time changes."""
-        # Refresh the task list when time changes
-        self.refresh(recompose=True)
-
-
 class CalendarApp(App):
     """A Textual app for displaying and managing a daily schedule."""
 
@@ -155,23 +109,32 @@ class CalendarApp(App):
 
     #task-list {
         height: 1fr;
-        overflow-y: auto;
+        border: solid $primary;
     }
 
-    TaskListItem {
+    ListView {
+        background: $surface;
+    }
+
+    ListItem {
         padding: 1 2;
-        border-bottom: solid $primary-lighten-1;
     }
 
-    .current-task {
-        background: $primary-darken-2;
+    ListItem > Static {
+        width: 100%;
     }
     """
 
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
+        ("space", "toggle_complete", "Toggle Complete"),
+        ("enter", "toggle_complete", "Toggle Complete"),
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
     ]
+
+    current_time: reactive[dt.time] = reactive(dt.datetime.now().time)
 
     def __init__(
         self,
@@ -197,9 +160,7 @@ class CalendarApp(App):
             yield Static(self._render_schedule_info(), id="schedule-info")
 
             # Task list
-            with Vertical(id="task-list"):
-                if self.schedule:
-                    yield CalendarView(self.schedule, self.state_manager)
+            yield ListView(id="task-list")
 
         yield Footer()
 
@@ -211,6 +172,9 @@ class CalendarApp(App):
         except (ScheduleParseError, StateManagerError) as e:
             self.exit(message=f"Error loading schedule: {e}")
             return
+
+        # Populate task list
+        self._populate_task_list()
 
         # Set up auto-refresh timer (every minute)
         self.set_interval(60, self._update_current_time)
@@ -233,6 +197,33 @@ class CalendarApp(App):
                     "No schedule loaded. Run 'tcal load <schedule_file>' first."
                 )
             self.schedule = load_schedule(state.schedule_file)
+
+    def _populate_task_list(self) -> None:
+        """Populate the task list with tasks."""
+        if not self.schedule:
+            return
+
+        task_list = self.query_one("#task-list", ListView)
+        task_list.clear()
+
+        # Get completion state
+        state = self.state_manager.load_state()
+        completed_tasks = state.completed_tasks if state else set()
+
+        # Get current task
+        current_task = self.schedule.get_current_task(self.current_time)
+
+        # Add tasks to list
+        for task in self.schedule.tasks:
+            is_current = current_task is not None and task.id == current_task.id
+            is_completed = task.id in completed_tasks
+
+            task_item = TaskListItem(
+                task,
+                is_current=is_current,
+                is_completed=is_completed,
+            )
+            task_list.append(task_item)
 
     def _render_schedule_info(self) -> str:
         """Render the schedule information header."""
@@ -266,28 +257,77 @@ class CalendarApp(App):
             f"📅 [bold cyan]{self.schedule.date.strftime('%A, %B %d, %Y')}[/]",
             f"   Current time: [yellow]{time_str}[/]  |  {current_str}",
             f"   Progress: [green]{completed}[/]/{total} tasks ([green]{pct:.0f}%[/] complete)",
+            "",
+            f"   [dim]Use ↑/↓ or j/k to navigate, Space/Enter to toggle completion[/]",
         ]
 
         return "\n".join(info_lines)
 
     def _update_current_time(self) -> None:
         """Update the current time and refresh display."""
+        self.current_time = dt.datetime.now().time()
+
         # Update schedule info
         info_widget = self.query_one("#schedule-info", Static)
         info_widget.update(self._render_schedule_info())
 
-        # Update calendar view
-        calendar_view = self.query_one(CalendarView)
-        calendar_view.current_time = dt.datetime.now().time()
+        # Refresh task list
+        self._populate_task_list()
 
     def action_refresh(self) -> None:
         """Manually refresh the schedule."""
         try:
             self._load_schedule()
+            self._populate_task_list()
             self._update_current_time()
-            self.notify("Schedule refreshed!")
+            self.notify("Schedule refreshed!", severity="information")
         except (ScheduleParseError, StateManagerError) as e:
             self.notify(f"Error refreshing: {e}", severity="error")
+
+    def action_toggle_complete(self) -> None:
+        """Toggle completion status of selected task."""
+        task_list = self.query_one("#task-list", ListView)
+
+        # Get selected item
+        if task_list.index is None:
+            self.notify("No task selected", severity="warning")
+            return
+
+        selected_item = task_list.highlighted_child
+        if not isinstance(selected_item, TaskListItem):
+            return
+
+        task = selected_item.task
+
+        # Toggle completion in state
+        try:
+            if selected_item.is_completed:
+                self.state_manager.mark_task_incomplete(task.id)
+                self.notify(f"Marked '{task.title}' as incomplete", severity="information")
+            else:
+                self.state_manager.mark_task_complete(task.id)
+                self.notify(f"Marked '{task.title}' as complete! ✓", severity="information")
+
+            # Refresh display
+            self._populate_task_list()
+            self._update_current_time()
+
+            # Restore selection position
+            if task_list.index is not None:
+                task_list.index = min(task_list.index, len(task_list) - 1)
+
+        except StateManagerError as e:
+            self.notify(f"Error updating task: {e}", severity="error")
+
+    def action_cursor_down(self) -> None:
+        """Move cursor down (vim-style j)."""
+        task_list = self.query_one("#task-list", ListView)
+        task_list.action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        """Move cursor up (vim-style k)."""
+        task_list = self.query_one("#task-list", ListView)
+        task_list.action_cursor_up()
 
     def action_quit(self) -> None:
         """Quit the application."""

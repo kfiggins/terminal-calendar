@@ -119,26 +119,27 @@
 
 ---
 
-## Phase 6: Interactive Task Completion
+## Phase 6: Interactive Task Completion ✅ (COMPLETED)
 **Goal**: Add keyboard controls to mark tasks complete in TUI
 
 **Tasks**:
-- [ ] Add keyboard navigation:
-  - Up/Down arrows or j/k to select tasks
+- [x] Add keyboard navigation:
+  - ↑/↓ arrows or j/k to select tasks
   - Space or Enter to toggle completion
-  - q to quit
-- [ ] Visual feedback for selection (highlight selected task)
-- [ ] Update state manager when task marked complete
-- [ ] Show immediate visual update (checkbox/icon change)
-- [ ] Add keybinding help footer
+  - q to quit, r to refresh
+- [x] Visual feedback for selection (ListView built-in highlighting)
+- [x] Update state manager when task marked complete
+- [x] Show immediate visual update (checkbox/icon change)
+- [x] Add keybinding help (footer + inline help text)
 
-**Deliverable**: Interactive calendar with in-app task completion
+**Deliverable**: Interactive calendar with in-app task completion ✅
 
 **Success Criteria**:
-- Can navigate through tasks with keyboard
-- Can mark tasks complete without leaving app
-- Completion status persists after app restart
-- Intuitive keyboard controls
+- ✅ Can navigate through tasks with keyboard (↑/↓, j/k)
+- ✅ Can mark tasks complete without leaving app (Space/Enter)
+- ✅ Completion status persists after app restart
+- ✅ Intuitive keyboard controls with visual feedback
+- ✅ Notifications for all actions
 
 ---
 
@@ -257,9 +258,9 @@
 ---
 
 ## Current Status
-**Active Phase**: Phase 6 - Interactive Task Completion
-**Completed Phases**: Phases 1-5 (Setup, Models, State, CLI, Core TUI)
-**Next Steps**: Add keyboard navigation and in-app task completion
+**Active Phase**: Phase 7 - Enhanced UI/UX
+**Completed Phases**: Phases 1-6 (Setup, Models, State, CLI, TUI, Interactive)
+**Next Steps**: Polish UI with better colors, layout, and visual indicators
 
 ---
 
