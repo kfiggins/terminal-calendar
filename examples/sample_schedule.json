@@ -1,0 +1,77 @@
+{
+  "date": "2026-02-13",
+  "tasks": [
+    {
+      "id": "task_1",
+      "title": "Morning standup",
+      "start_time": "09:00",
+      "end_time": "09:15",
+      "description": "Daily team sync - discuss blockers and priorities",
+      "priority": "high"
+    },
+    {
+      "id": "task_2",
+      "title": "Deep work: Terminal Calendar feature",
+      "start_time": "09:30",
+      "end_time": "11:30",
+      "description": "Focus session - implement schedule parser and data models",
+      "priority": "high"
+    },
+    {
+      "id": "task_3",
+      "title": "Coffee break",
+      "start_time": "11:30",
+      "end_time": "11:45",
+      "description": "Take a break, stretch, refill water",
+      "priority": "low"
+    },
+    {
+      "id": "task_4",
+      "title": "Code review",
+      "start_time": "11:45",
+      "end_time": "12:30",
+      "description": "Review PRs from team members",
+      "priority": "medium"
+    },
+    {
+      "id": "task_5",
+      "title": "Lunch",
+      "start_time": "12:30",
+      "end_time": "13:30",
+      "description": "Lunch break - step away from desk",
+      "priority": "medium"
+    },
+    {
+      "id": "task_6",
+      "title": "Client meeting",
+      "start_time": "14:00",
+      "end_time": "14:30",
+      "description": "Project status update with stakeholders",
+      "priority": "high"
+    },
+    {
+      "id": "task_7",
+      "title": "Documentation",
+      "start_time": "14:45",
+      "end_time": "15:30",
+      "description": "Update API docs and README",
+      "priority": "medium"
+    },
+    {
+      "id": "task_8",
+      "title": "Testing & bug fixes",
+      "start_time": "15:30",
+      "end_time": "16:30",
+      "description": "Write tests and fix any failing tests",
+      "priority": "high"
+    },
+    {
+      "id": "task_9",
+      "title": "Email & admin",
+      "start_time": "16:30",
+      "end_time": "17:00",
+      "description": "Respond to emails, update calendar, plan tomorrow",
+      "priority": "low"
+    }
+  ]
+}
