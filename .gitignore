@@ -145,3 +145,4 @@ Thumbs.db
 # Project specific
 .terminal-calendar/
 *.json.bak
+.venv/
